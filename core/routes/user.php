@@ -18,16 +18,19 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
             Route::post('api/register', 'registerApi')->name('registerApi')->withoutMiddleware('guest');
             Route::post('check-user', 'checkUser')->name('checkUser')->withoutMiddleware('guest');
         });
-
+        
         Route::controller('ForgotPasswordController')->prefix('password')->name('password.')->group(function(){
             Route::get('reset', 'showLinkRequestForm')->name('request');
             Route::post('email', 'sendResetCodeEmail')->name('email');
+            Route::post('api/email', 'sendResetCodeEmailApi')->name('email');
             Route::get('code-verify', 'codeVerify')->name('code.verify');
             Route::post('verify-code', 'verifyCode')->name('verify.code');
+            Route::post('api/verify-code', 'verifyCodeApi')->name('verify.code');
         });
 
         Route::controller('ResetPasswordController')->group(function(){
             Route::post('password/reset', 'reset')->name('password.update');
+            Route::post('password/api/reset', 'resetApi')->name('password.update');
             Route::get('password/reset/{token}', 'showResetForm')->name('password.reset');
         });
 
@@ -119,4 +122,8 @@ Route::middleware('auth')->name('user.')->group(function () {
             Route::post('manual', 'manualDepositUpdate')->name('manual.update');
         });
     });
+});
+
+Route::controller('SiteController')->name('user.')->group(function () {
+    Route::get('api/properties', 'propertyApi')->name('property');
 });

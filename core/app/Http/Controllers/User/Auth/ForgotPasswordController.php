@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\PasswordReset;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 
 class ForgotPasswordController extends Controller
 {
@@ -58,6 +60,78 @@ class ForgotPasswordController extends Controller
         return to_route('user.password.code.verify')->withNotify($notify);
     }
 
+    public function sendResetCodeEmailApi(Request $request)
+    {
+        // Validate the input
+        $validator = Validator::make($request->all(), [
+            'email' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check captcha
+        if (!verifyCaptcha()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid captcha provided'
+            ], 422);
+        }
+
+        // Determine the field type (email or username)
+        // $fieldType = $this->findFieldType();
+        $user = User::where('email', $request->email)->first();
+
+        // If the user is not found
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The account could not be found'
+            ], 404);
+        }
+
+        // Delete any existing password reset tokens
+        PasswordReset::where('email', $user->email)->delete();
+
+        // Generate a new reset code
+        $code = verificationCode(6);
+
+        // Create a new password reset entry
+        $passwordReset = new PasswordReset();
+        $passwordReset->email = $user->email;
+        $passwordReset->token = $code;
+        $passwordReset->created_at = \Carbon\Carbon::now();
+        $passwordReset->save();
+
+        // Gather user IP and browser info
+        // $userIpInfo = getIpInfo();
+        // $userBrowserInfo = osBrowser();
+
+        // // Notify the user
+        // notify($user, 'PASS_RESET_CODE', [
+        //     'code' => $code,
+        //     'operating_system' => @$userBrowserInfo['os_platform'],
+        //     'browser' => @$userBrowserInfo['browser'],
+        //     'ip' => @$userIpInfo['ip'],
+        //     'time' => @$userIpInfo['time']
+        // ], ['email']);
+
+        // // Save the email in the session
+        // session()->put('pass_res_mail', $user->email);
+
+        // Return a success response
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password reset email sent successfully',
+            'email' => $user->email
+        ], 200);
+    }
+
+
     public function findFieldType()
     {
         $input = request()->input('value');
@@ -94,4 +168,36 @@ class ForgotPasswordController extends Controller
         session()->flash('fpass_email', $request->email);
         return to_route('user.password.reset', $code)->withNotify($notify);
     }
+
+    public function verifyCodeApi(Request $request)
+    {
+        // Validate the input
+        $validator = Validator::make($request->all(), [
+            'code' => 'required',
+            'email' => 'required|email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if the provided code matches the one in the database
+        $passwordReset = PasswordReset::where('token', $request->code)->where('email', $request->email)->first();
+
+        if (!$passwordReset) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Verification code doesn\'t match'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'You can change your password',
+        ], 200);
+    }
+
 }

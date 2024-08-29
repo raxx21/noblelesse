@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Validator;
 
 class ResetPasswordController extends Controller
 {
@@ -54,6 +55,46 @@ class ResetPasswordController extends Controller
         return to_route('user.login')->withNotify($notify);
     }
 
+    public function resetApi(Request $request)
+    {
+        // Validate the input
+        $validator = Validator::make($request->all(), $this->rules());
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Find the PasswordReset entry based on the token
+        $reset = PasswordReset::where('token', $request->token)->orderBy('created_at', 'desc')->first();
+
+        if (!$reset) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid verification code'
+            ], 404);
+        }
+
+        // Find the user associated with the email and reset their password
+        $user = User::where('email', $reset->email)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Respond with success
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password changed successfully'
+        ], 200);
+    }
 
     protected function rules()
     {
@@ -64,7 +105,7 @@ class ResetPasswordController extends Controller
         return [
             'token' => 'required',
             'email' => 'required|email',
-            'password' => ['required', 'confirmed', $passwordValidation],
+            'password' => ['required', $passwordValidation],
         ];
     }
 }

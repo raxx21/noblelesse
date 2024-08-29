@@ -141,7 +141,7 @@ class SiteController extends Controller
 
     public function property(Request $request)
     {
-        $pageTitle  = 'Properties';
+        $pageTitle  = 'properties';
 
         $properties = Property::active()
             ->searchable(['title'])
@@ -177,6 +177,15 @@ class SiteController extends Controller
         $times            = TimeSetting::orderBy('time')->active()->get();
 
         return view('Template::property', compact('pageTitle', 'properties', 'user', 'localities', 'sections', 'times','seoContents','seoImage','times'));
+    }
+
+    public function propertyApi(Request $request)
+    {
+        $properties = Property::active();
+        return response()->json([
+            'status' => 'success',
+            'message' => $properties
+        ], 200);
     }
 
     public function propertyDetails($slug, $id)
