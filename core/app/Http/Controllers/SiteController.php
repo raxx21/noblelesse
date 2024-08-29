@@ -181,10 +181,10 @@ class SiteController extends Controller
 
     public function propertyApi(Request $request)
     {
-        $properties = Property::active();
+        $properties = Property::all();
         return response()->json([
             'status' => 'success',
-            'message' => $properties
+            'data' => $properties
         ], 200);
     }
 
