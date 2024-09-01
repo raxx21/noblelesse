@@ -270,4 +270,13 @@ class PropertyController extends Controller
             ]);
         }
     }
+
+    public function propertyGalleryApi($propertyId)
+    {
+        $galleryPhotos = PropertyGallery::where('property_id', $propertyId)->get();
+        return response()->json([
+            'status' => 'success',
+            'data' => $galleryPhotos
+        ], 200);
+    }
 }

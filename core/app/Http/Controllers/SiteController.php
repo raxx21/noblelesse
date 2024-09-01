@@ -129,6 +129,30 @@ class SiteController extends Controller
         return view('Template::blogs', compact('pageTitle', 'blogs', 'sections', 'seoContents', 'seoImage'));
     }
 
+    public function blogApi()
+    {
+        $blogs = Frontend::where('data_keys', 'blog.element')->get();
+        return response()->json([
+            'status' => 'success',
+            'message' => $blogs
+        ], 200);
+    }
+
+    public function blogDetailsApi($id)
+    {
+        $blog = Frontend::where('id', $id)->where('data_keys', 'blog.element')->firstOrFail();
+        if ($blog) {
+            return response()->json([
+                'status' => 'success',
+                'message' => $blog
+            ], 200);
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Blog not found'
+        ], 401);
+    }
+
     public function blogDetails($slug)
     {
         $blog = Frontend::where('slug', $slug)->where('data_keys', 'blog.element')->firstOrFail();
@@ -185,6 +209,15 @@ class SiteController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $properties
+        ], 200);
+    }
+
+    public function propertyDetailsApi($id)
+    {
+        $propertyDetails = Property::where('id', $id)->first();
+        return response()->json([
+            'status' => 'success',
+            'data' => $propertyDetails
         ], 200);
     }
 

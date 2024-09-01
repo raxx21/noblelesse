@@ -85,6 +85,7 @@ Route::middleware('auth')->name('user.')->group(function () {
             //Profile setting
             Route::controller('ProfileController')->group(function(){
                 Route::get('profile-setting', 'profile')->name('profile.setting');
+                Route::get('api/profile/{id}', 'profileApi')->withoutMiddleware('guest')->name('profile');
                 Route::post('profile-setting', 'submitProfile');
                 Route::get('change-password', 'changePassword')->name('change.password');
                 Route::post('change-password', 'submitPassword');
@@ -126,4 +127,17 @@ Route::middleware('auth')->name('user.')->group(function () {
 
 Route::controller('SiteController')->name('user.')->group(function () {
     Route::get('api/properties', 'propertyApi')->name('property');
+    Route::get('api/propertiesDetails/{id}', 'propertyDetailsApi')->name('propertyDetails');
+    Route::get('api/blogs', 'blogApi');
+    Route::get('api/blogDetails/{id}', 'blogDetailsApi');
+});
+
+Route::controller('User\ProfileController')->name('user.')->group(function(){
+    Route::get('api/profile/{id}', 'profileApi')->name('profile');
+    Route::post('profile-setting', 'submitProfile');
+    Route::post('api/changePassword', 'changePasswordApi');
+});
+
+Route::controller('Admin\PropertyController')->name('user.')->group(function(){
+    Route::get('api/propertyGallery/{propertyId}', 'propertyGalleryApi')->name('propertyGallery');
 });

@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
@@ -16,6 +18,21 @@ class ProfileController extends Controller
         $pageTitle = "Profile Setting";
         $user = auth()->user();
         return view('Template::user.profile_setting', compact('pageTitle','user'));
+    }
+
+    public function profileApi($id)
+    {
+        $user = User::where('id', $id)->first();
+        if ($user) {
+            return response()->json([
+                'status' => 'success',
+                'message' => $user
+            ], 200);
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User not found'
+        ], 401);
     }
 
     public function submitProfile(Request $request)
@@ -83,5 +100,56 @@ class ProfileController extends Controller
             $notify[] = ['error', 'The password doesn\'t match!'];
             return back()->withNotify($notify);
         }
+    }
+
+    public function changePasswordApi(Request $request)
+    {
+        $passwordValidation = Password::min(6)
+            ->mixedCase()
+            ->numbers()
+            ->symbols()
+            ->uncompromised();
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'current_password' => 'required',
+            'password' => ['required', 'confirmed', $passwordValidation]
+        ], [
+            'user_id.required' => 'The user ID is required.',
+            'user_id.exists' => 'The user ID does not exist.',
+            'current_password.required' => 'The current password is required.',
+            'password.required' => 'The new password is required.',
+            'password.confirmed' => 'The password confirmation does not match.'
+        ]);
+
+        // Handle validation errors
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::where('id', $request->user_id)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User not found'
+            ], 401);
+        }
+        if (Hash::check($request->current_password, $user->password)) {
+            $password = Hash::make($request->password);
+            $user->password = $password;
+            $user->save();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Password changed successfully'
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Current password is wrong'
+        ], 401);
     }
 }
