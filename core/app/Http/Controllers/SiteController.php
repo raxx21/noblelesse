@@ -134,7 +134,7 @@ class SiteController extends Controller
         $blogs = Frontend::where('data_keys', 'blog.element')->get();
         return response()->json([
             'status' => 'success',
-            'message' => $blogs
+            'data' => $blogs
         ], 200);
     }
 
@@ -144,7 +144,7 @@ class SiteController extends Controller
         if ($blog) {
             return response()->json([
                 'status' => 'success',
-                'message' => $blog
+                'data' => $blog
             ], 200);
         }
         return response()->json([
@@ -206,6 +206,10 @@ class SiteController extends Controller
     public function propertyApi(Request $request)
     {
         $properties = Property::all();
+        foreach ($properties as $property) {
+            $location = Location::where('id', $property->location_id)->first();
+            $property->location = $location;
+        }
         return response()->json([
             'status' => 'success',
             'data' => $properties
@@ -215,6 +219,8 @@ class SiteController extends Controller
     public function propertyDetailsApi($id)
     {
         $propertyDetails = Property::where('id', $id)->first();
+        $location = Location::where('id', $propertyDetails->location_id)->first();
+        $propertyDetails->location = $location;
         return response()->json([
             'status' => 'success',
             'data' => $propertyDetails

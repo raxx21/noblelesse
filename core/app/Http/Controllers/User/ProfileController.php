@@ -26,7 +26,7 @@ class ProfileController extends Controller
         if ($user) {
             return response()->json([
                 'status' => 'success',
-                'message' => $user
+                'data' => $user
             ], 200);
         }
         return response()->json([

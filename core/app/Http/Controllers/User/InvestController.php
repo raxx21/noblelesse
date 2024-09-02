@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Deposit;
 use App\Models\GatewayCurrency;
 use App\Models\Installment;
+use App\Models\User;
 
 class InvestController extends Controller
 {
@@ -158,6 +159,27 @@ class InvestController extends Controller
             ->paginate(getPaginate());
 
         return view('Template::user.invest.history', compact('pageTitle', 'invests'));
+    }
+
+    public function myInvestmentHistory($userId)
+    {
+        $invests = Invest::where('user_id', $userId)->get();
+        foreach ($invests as $invest) {
+            $property = Property::where('id', $invest->property_id)->first();
+            $user = User::where('id', $invest->user_id)->first();
+            $invest->property = $property;
+            $invest->user = $user;
+        }
+        if($invests) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $invests
+            ], 200);
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'There are no investments'
+        ], 200);
     }
 
     public function gatewayPaymentInsert(Request $request)

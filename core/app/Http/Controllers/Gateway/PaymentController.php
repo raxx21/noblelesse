@@ -28,6 +28,21 @@ class PaymentController extends Controller
         return view('Template::user.payment.deposit', compact('gatewayCurrency', 'pageTitle'));
     }
 
+    public function depositHistoryApi($userId)
+    {
+        $deposit = Deposit::where('user_id', $userId)->get();
+        if($deposit) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $deposit
+            ], 200);
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'There are no deposits'
+        ], 200);
+    }
+
     public function depositInsert(Request $request)
     {
         $request->validate([

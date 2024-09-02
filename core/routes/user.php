@@ -141,3 +141,11 @@ Route::controller('User\ProfileController')->name('user.')->group(function(){
 Route::controller('Admin\PropertyController')->name('user.')->group(function(){
     Route::get('api/propertyGallery/{propertyId}', 'propertyGalleryApi')->name('propertyGallery');
 });
+
+Route::controller('User\InvestController')->name('invest.')->group(function () {
+    Route::get('api/myInvestmentHistory/{userId}', 'myInvestmentHistory')->name('myInvestment');
+});
+
+Route::controller('Gateway\PaymentController')->name('payment.')->group(function () {
+    Route::get('api/depositHistory/{userId}', 'depositHistoryApi')->name('depositHistory');
+});
