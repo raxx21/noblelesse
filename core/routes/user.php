@@ -134,6 +134,8 @@ Route::controller('SiteController')->name('user.')->group(function () {
 
 Route::controller('User\ProfileController')->name('user.')->group(function(){
     Route::get('api/profile/{id}', 'profileApi')->name('profile');
+    Route::post('api/profileUpdate', 'updateProfileApi')->name('profileUpdate');
+    Route::post('api/uploadProfilePic', 'uploadProfilePicApi')->name('uploadProfilePic');
     Route::post('profile-setting', 'submitProfile');
     Route::post('api/changePassword', 'changePasswordApi');
 });
@@ -144,6 +146,7 @@ Route::controller('Admin\PropertyController')->name('user.')->group(function(){
 
 Route::controller('User\InvestController')->name('invest.')->group(function () {
     Route::get('api/myInvestmentHistory/{userId}', 'myInvestmentHistory')->name('myInvestment');
+    Route::get('api/portfolio/{userId}', 'portfolioApi')->name('portfolio');
 });
 
 Route::controller('Gateway\PaymentController')->name('payment.')->group(function () {

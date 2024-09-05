@@ -35,6 +35,54 @@ class ProfileController extends Controller
         ], 401);
     }
 
+    public function uploadProfilePicApi(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'avatar'    => ['nullable', 'image', new FileTypeValidate(['jpg', 'jpeg', 'png'])]
+        ], [
+            'user_id.required' => 'The user ID is required.',
+            'user_id.exists' => 'The user ID does not exist.'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::where('id', $request->user_id)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User not found'
+            ], 401);
+        }
+
+        @$old = $user->avatar;
+        if ($request->has('avatar')) {
+            try {
+                $user->avatar = fileUploader($request->avatar, getFilePath('userProfile'), getFileSize('userProfile'), @$old);
+                $user->save();
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $user
+                ], 200);
+            } catch (\Exception $exp) {
+                throw ValidationException::withMessages(['error' => 'Couldn\'t upload your image']);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Something went wrong'
+                ], 404);
+            }
+        }
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Image not provided'
+        ], 404);
+    }
+
     public function submitProfile(Request $request)
     {
         $request->validate([
@@ -151,5 +199,87 @@ class ProfileController extends Controller
             'status' => 'success',
             'message' => 'Current password is wrong'
         ], 401);
+    }
+
+    public function updateProfileApi(Request $request)
+    {
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found'
+            ], 404);
+        }
+        // List of fields that can be updated
+        $updatableFields = [
+            'firstname',
+            'lastname',
+            'username',
+            'email',
+            'mobile',
+            'country_name',
+            'country_code',
+            'city',
+            'state',
+            'zip',
+            'address'
+        ];
+
+        // Loop through each updatable field
+        foreach ($updatableFields as $field) {
+            // If the request has this field, update the user's field
+            if ($request->has($field)) {
+                if ($request->email) {
+                    $exist = User::where('email',$request->email)->exists();
+                    if($exist) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Email already exists'
+                        ], 404);
+                    }
+                }
+                if ($request->mobile) {
+                    if (!$request->dial_code) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Mobile code is require to change mobile number'
+                        ], 404);
+                    }
+                    $exist = User::where('mobile',$request->mobile)->where('dial_code',$request->dial_code)->exists();
+                    if($exist) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Mobile already exists'
+                        ], 404);
+                    }
+                }
+                if ($request->username) {
+                    $exist = User::where('username',$request->username)->exists();
+                    if($exist) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Username already exists'
+                        ], 404);
+                    }
+                }
+                if ($request->country_name) {
+                    if (!$request->country_code) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Country code is require to change country name'
+                        ], 404);
+                    }
+                }
+                $user->$field = $request->input($field);
+            }
+        }
+
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully',
+            'data' => $user
+        ], 200);
     }
 }

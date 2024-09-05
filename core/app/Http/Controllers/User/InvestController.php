@@ -182,6 +182,26 @@ class InvestController extends Controller
         ], 200);
     }
 
+    public function portfolioApi($userId)
+    {
+        $invests = Invest::where('user_id', $userId)->get();
+        $totalInvested = 0;
+        $profit = 0;
+        foreach ($invests as $invest) {
+            $totalInvested += $invest->total_invest_amount;
+            $profit += $invest->total_profit;
+        }
+        $obj = (object) [
+            'Invested_Amount'=> $totalInvested,
+            'Returns_Earned'=> $profit,
+            'Total_Amount'=> $totalInvested + $profit
+        ];
+        return response()->json([
+            'status' => 'success',
+            'data' => $obj
+        ], 200);
+    }
+
     public function gatewayPaymentInsert(Request $request)
     {
         $request->validate([
